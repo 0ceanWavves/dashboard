@@ -1,7 +1,3 @@
-/**
- * Main
- */
-
 'use strict';
 
 window.isRtl = window.Helpers.isRtl();
@@ -388,4 +384,158 @@ if (document.getElementById('layout-menu')) {
 
   // Manage menu expanded/collapsed state with local storage support If enableMenuLocalStorage = true in config.js
   if (typeof config !== 'undefined') {
-    if (config.
+    if (config.enableMenuLocalStorage) {
+      try {
+        if (localStorage.getItem('templateCustomizer-' + templateName + '--LayoutCollapsed') !== null)
+          window.Helpers.setCollapsed(
+            localStorage.getItem('templateCustomizer-' + templateName + '--LayoutCollapsed') === 'true',
+            false
+          );
+      } catch (e) {}
+    }
+  }
+})(); // End of IIFE
+
+// ! Removed following code if you do't wish to use jQuery. Remember that navbar search functionality will stop working on removal.
+if (typeof $ !== 'undefined') {
+  $(function () {
+    // ! TODO: Required to load after DOM is ready, did this now with jQuery ready.
+    window.Helpers.initSidebarToggle();
+    // Toggle Universal Sidebar
+
+    // Navbar Search with autosuggest (typeahead)
+    // ? You can remove the following JS if you don't want to use search functionality.
+    //----------------------------------------------------------------------------------
+
+    var searchToggler = $('.search-toggler'),
+      searchInputWrapper = $('.search-input-wrapper'),
+      searchInput = $('.search-input'),
+      contentBackdrop = $('.content-backdrop');
+
+    // Open search input on click of search icon
+    if (searchToggler.length) {
+      searchToggler.on('click', function () {
+        if (searchInputWrapper.length) {
+          searchInputWrapper.toggleClass('d-none');
+          searchInput.focus();
+        }
+      });
+    }
+    // Open search on 'CTRL+/'
+    $(document).on('keydown', function (event) {
+      let ctrlKey = event.ctrlKey,
+        slashKey = event.which === 191;
+
+      if (ctrlKey && slashKey) {
+        if (searchInputWrapper.length) {
+          searchInputWrapper.toggleClass('d-none');
+          searchInput.focus();
+        }
+      }
+    });
+    // Note: Following code is required to update container class of typeahead dropdown width on focus of search input. setTimeout is required to allow time to initiate Typeahead UI.
+    setTimeout(function () {
+      var twitterTypeahead = $('.twitter-typeahead');
+      searchInput.on('focus', function () {
+        if (searchInputWrapper.hasClass('container-xxl')) {
+          searchInputWrapper.find(twitterTypeahead).addClass('container-xxl');
+          twitterTypeahead.removeClass('container-fluid');
+        } else if (searchInputWrapper.hasClass('container-fluid')) {
+          searchInputWrapper.find(twitterTypeahead).addClass('container-fluid');
+          twitterTypeahead.removeClass('container-xxl');
+        }
+      });
+    }, 10);
+
+    if (searchInput.length) {
+      // Filter config
+      var filterConfig = function (data) {
+        return function findMatches(q, cb) {
+          let matches = [];
+          data.filter(function (i) {
+            if (i.name.toLowerCase().startsWith(q.toLowerCase())) {
+              matches.push(i);
+            } else if (i.name.toLowerCase().includes(q.toLowerCase())) {
+                matches.push(i);
+            }
+          });
+          matches.sort(function (a, b) {
+            return b.name < a.name ? 1 : -1;
+          });
+          cb(matches);
+        };
+      };
+
+      // Search JSON
+      var searchJsonUrl = "{{ asset('assets/auth/json/search-vertical.json') }}"; // For vertical layout
+      if ($('#layout-menu').hasClass('menu-horizontal')) {
+        searchJsonUrl = "{{ asset('assets/auth/json/search-horizontal.json') }}"; // For horizontal layout
+      }
+
+      // Store the PerfectScrollbar instance outside the loop
+      let psSearch;
+
+      // Initialize PerfectScrollbar after the search results are updated
+      function initializeScrollbar() {
+        $('.navbar-search-suggestion').each(function () {
+          psSearch = new PerfectScrollbar(this, {
+            wheelPropagation: false,
+            suppressScrollX: true
+          });
+        });
+      }
+
+      // Update the scrollbar whenever new search results are loaded
+      function updateSearchResultScrollbar() {
+        if (psSearch) {
+          psSearch.update();
+        } else {
+          initializeScrollbar();
+        }
+      }
+
+      // Search API AJAX call
+      $.ajax({
+        url: searchJsonUrl,
+        type: 'GET',
+        dataType: 'json',
+        success: function (data) {
+          console.log(data);
+          // Init typeahead on searchInput inside the success callback
+          searchInput.each(function () {
+            var $this = $(this);
+            $this.typeahead({
+              hint: false,
+              classNames: {
+                menu: 'tt-menu navbar-search-suggestion',
+                cursor: 'active',
+                suggestion: 'suggestion d-flex justify-content-between px-3 py-2 w-100'
+              }
+            })
+            .bind('typeahead:render', function () {
+              contentBackdrop.addClass('show').removeClass('fade');
+              updateSearchResultScrollbar();
+            })
+            .bind('typeahead:select', function (ev, suggestion) {
+              if (suggestion.url) {
+                window.location = suggestion.url;
+              }
+            })
+            .bind('typeahead:close', function () {
+              $this.typeahead('val', '');
+              searchInputWrapper.addClass('d-none');
+              contentBackdrop.addClass('fade').removeClass('show');
+              updateSearchResultScrollbar();
+            });
+          }); // End of searchInput.each()
+
+          // Initialize the scrollbar for the first time
+          initializeScrollbar();
+        }, // End of AJAX success
+        error: function (error) {
+          console.error('Error loading search JSON:', error);
+        }
+      }); // End of AJAX call
+    } // End of if (searchInput.length)
+  }); // End of $(function()
+} // End of if (typeof $ !== 'undefined')

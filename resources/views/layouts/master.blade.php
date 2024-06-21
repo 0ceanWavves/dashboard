@@ -3194,7 +3194,7 @@
 
     <!-- Page JS -->
     <script src="{{ asset('assets/auth/js/dashboards-analytics.js') }}"></script>
-    <script>
+<script>
 function updateFrontendAfterLogout() {
   // Use AJAX to update the frontend
   $.ajax({
@@ -3202,7 +3202,7 @@ function updateFrontendAfterLogout() {
     type: 'GET',
     success: function(data) {
       if (data.authenticated === false) {
-        window.location.href = '/login'; // Redirect to login page
+        window.location.href = "{{ route('login') }}"; // Using Laravel's route helper
       }
     },
     error: function(error) {
@@ -3211,26 +3211,6 @@ function updateFrontendAfterLogout() {
   });
 }
 </script>
-    <script>
-      function updateFrontendAfterLogout() {
-        // Use AJAX to update the frontend
-        $.ajax({
-          url: '/check-auth', // Create a route for this
-          type: 'GET',
-          success: function(data) {
-            if (data.authenticated === false) {
-              // User is logged out, update the frontend
-              window.location.href = '/login'; // Redirect to login page
-              // Or, you can update specific elements on the page without a full redirect
-            }
-          },
-          error: function(error) {
-            console.error('Error checking authentication status:', error);
-          }
-        });
-      }
-    </script>
-
-    @yield('page-specific-js')
-  </body>
+@yield('page-specific-js')
+</body>
 </html>
