@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmailController; // Added EmailController
 use Illuminate\Support\Facades\Auth;
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -20,6 +21,8 @@ Route::get('/', function () {
 });
 
 Route::get('/profile', [ProfileController::class, 'index'])->name('profile')->middleware('auth');
+
+Route::get('/email', [EmailController::class, 'index'])->name('email'); // Added email route
 
 Route::get('/check-auth', function () {
     return response()->json(['authenticated' => Auth::check()]);
